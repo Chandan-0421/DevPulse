@@ -1,0 +1,294 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #FAF5EF;
+  color: #1a1a1a;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+
+/* Clay card — warm, soft, 3D-ish */
+.clay-card {
+  background: linear-gradient(145deg, #ffffff, #f0e8e0);
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow:
+    8px 8px 24px rgba(180, 140, 100, 0.18),
+    -4px -4px 12px rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(180,140,100,0.1);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+
+.clay-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow:
+    12px 16px 40px rgba(180, 140, 100, 0.22),
+    -4px -4px 16px rgba(255, 255, 255, 1),
+    inset 0 1px 0 rgba(255,255,255,1);
+}
+
+/* Glass card — frosted, light */
+.glass-card {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  box-shadow:
+    0 8px 32px rgba(180, 140, 100, 0.12),
+    0 2px 8px rgba(180, 140, 100, 0.08),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 48px rgba(180, 140, 100, 0.16),
+    inset 0 1px 0 rgba(255,255,255,1);
+}
+
+/* Metric value colors */
+.metric-value {
+  background: linear-gradient(135deg, #1a1a1a 0%, #444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.metric-value-green {
+  background: linear-gradient(135deg, #1a7a35 0%, #2ea043 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.metric-value-blue {
+  background: linear-gradient(135deg, #0969da 0%, #388bfd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.metric-value-purple {
+  background: linear-gradient(135deg, #6639ba 0%, #8957e5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Live dot */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ea043;
+  box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.4);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(46, 160, 67, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }
+}
+
+/* Login button */
+.login-btn {
+  background: linear-gradient(135deg, #1a7a35, #2ea043);
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow:
+    0 8px 24px rgba(26, 122, 53, 0.3),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 0.01em;
+}
+
+.login-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 16px 40px rgba(26, 122, 53, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* Logout button */
+.logout-btn {
+  background: rgba(255,255,255,0.7);
+  color: #555;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(180,140,100,0.12);
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,0.9);
+  color: #222;
+  transform: translateY(-1px);
+}
+
+/* Section title */
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+}
+
+/* Heatmap cell */
+.heatmap-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  cursor: default;
+  transition: transform 0.15s ease;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.5);
+  z-index: 10;
+  position: relative;
+}
+
+/* Tag */
+.tag {
+  display: inline-block;
+  background: rgba(26, 122, 53, 0.1);
+  color: #1a7a35;
+  border: 1px solid rgba(26, 122, 53, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(180,140,100,0.08) 25%,
+    rgba(180,140,100,0.16) 50%,
+    rgba(180,140,100,0.08) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+/* Decorative blobs — static, subtle */
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.blob-1 {
+  width: 420px; height: 420px;
+  background: #d4a574;
+  top: -80px; left: -80px;
+}
+
+.blob-2 {
+  width: 320px; height: 320px;
+  background: #a8c4e0;
+  top: 40%; right: -60px;
+}
+
+.blob-3 {
+  width: 280px; height: 280px;
+  background: #c4a8d4;
+  bottom: -60px; left: 35%;
+}
+
+/* ── Responsive ── */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .clay-card {
+    border-radius: 18px;
+    padding: 16px 18px !important;
+  }
+
+  .glass-card {
+    border-radius: 18px;
+    padding: 18px 20px !important;
+  }
+
+  .blob-1 { width: 280px; height: 280px; }
+  .blob-2 { width: 220px; height: 220px; }
+  .blob-3 { width: 200px; height: 200px; }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .clay-card {
+    border-radius: 14px;
+  }
+
+  .glass-card {
+    border-radius: 14px;
+  }
+
+  .login-btn {
+    padding: 12px 28px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+
+  .logout-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .heatmap-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  .section-title {
+    font-size: 10px;
+  }
+}
+
+.metric-value-orange {
+  background: linear-gradient(135deg, #e05c00 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
