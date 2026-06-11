@@ -13,7 +13,18 @@ const server = http.createServer(app)
 // WebSocket server attached to the same HTTP server
 const wss = new WebSocket.Server({ server })
 
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }))
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowed = process.env.FRONTEND_URL?.replace(/\/$/, '')
+    const requestOrigin = origin?.replace(/\/$/, '')
+    if (!origin || requestOrigin === allowed) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}))
 app.use(express.json())
 
 app.use('/auth', authRoutes)

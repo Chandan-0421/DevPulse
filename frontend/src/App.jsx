@@ -47,7 +47,10 @@ export default function App() {
   }
 
   function connectWebSocket() {
-    const ws = new WebSocket(`ws://localhost:5000`)
+    const wsUrl = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace('https://', 'wss://').replace('http://', 'ws://')
+      : 'ws://localhost:5000'
+    const ws = new WebSocket(wsUrl)
     wsRef.current = ws
     ws.onopen = () => { ws.send(JSON.stringify({ token })); setWsLive(true) }
     ws.onmessage = (e) => { const msg = JSON.parse(e.data); if (msg.type === 'refresh') fetchMetrics() }
