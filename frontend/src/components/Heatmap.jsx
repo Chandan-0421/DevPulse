@@ -58,9 +58,6 @@ export default function Heatmap({ heatmap, peakDay }) {
   }
 
   const totalCommits = Object.values(heatmap).reduce((a, b) => a + b, 0)
-  const maxDay = Object.entries(heatmap)
-    .filter(([, count]) => count > 0)
-    .sort((a, b) => b[1] - a[1])[0]
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative' }}>
@@ -115,7 +112,7 @@ export default function Heatmap({ heatmap, peakDay }) {
         </span>
         {peakDay && (
           <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)' }}>
-            peak: {peakDay.count} commits on {formatDate(peakDay.date)}
+            peak daily commits: {peakDay.count} on {formatDate(peakDay.date)}
           </span>
         )}
       </div>

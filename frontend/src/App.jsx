@@ -21,7 +21,7 @@ export default function App() {
     const t = params.get('token')
     if (t) {
       localStorage.setItem('gh_token', t)
-      setToken(t)
+      setTimeout(() => setToken(t), 0)
       window.history.replaceState({}, '', '/')
     }
   }, [])
@@ -30,6 +30,7 @@ export default function App() {
     if (!token) return
     fetchMetrics()
     connectWebSocket()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
   async function fetchMetrics() {
