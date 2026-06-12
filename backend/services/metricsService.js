@@ -15,6 +15,7 @@ async function computeMetrics(token, username) {
   let allCommits = []
   let totalPRMergeTimes = []
   const commitsPerRepo = {}
+  const weeklyChurn = {}
 
   for (const repo of topRepos) {
     try {
