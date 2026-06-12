@@ -226,7 +226,7 @@ export default function App() {
         {/* Heatmap */}
         <div className="glass-card heatmap-wrapper" style={{ padding: '24px 28px', marginBottom: 20, position: 'relative' }}>
           <div className="section-title">Commit activity</div>
-          <Heatmap heatmap={metrics.heatmap} />
+          <Heatmap heatmap={metrics.heatmap} peakDay={metrics.peakDay} />
         </div>
 
         {/* Code churn — only shows when GitHub has computed the stats */}

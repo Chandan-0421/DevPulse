@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-export default function Heatmap({ heatmap }) {
+export default function Heatmap({ heatmap, peakDay }) {
   const [tooltip, setTooltip] = useState(null)
   const wrapperRef = useRef(null)
 
@@ -58,7 +58,9 @@ export default function Heatmap({ heatmap }) {
   }
 
   const totalCommits = Object.values(heatmap).reduce((a, b) => a + b, 0)
-  const maxDay = Object.entries(heatmap).sort((a, b) => b[1] - a[1])[0]
+  const maxDay = Object.entries(heatmap)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])[0]
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative' }}>
@@ -106,13 +108,14 @@ export default function Heatmap({ heatmap }) {
       )}
 
       {/* Footer */}
+      {/* Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, flexWrap: 'wrap', gap: 6 }}>
         <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)' }}>
           {totalCommits} commits · last 90 days
         </span>
-        {maxDay && (
+        {peakDay && (
           <span style={{ fontSize: 12, color: 'rgba(0,0,0,0.35)' }}>
-            peak: {maxDay[1]} commits on {formatDate(maxDay[0])}
+            peak: {peakDay.count} commits on {formatDate(peakDay.date)}
           </span>
         )}
       </div>

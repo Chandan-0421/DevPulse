@@ -81,16 +81,22 @@ async function computeMetrics(token, username) {
       ? Math.round(totalPRMergeTimes.reduce((a, b) => a + b, 0) / totalPRMergeTimes.length)
       : null
 
-  const metrics = {
-    totalCommits: allCommits.length,
-    streak,
-    avgPRMergeTimeHours: avgMergeTime,
-    activeRepos,
-    commitsPerRepo,
-    heatmap,
-    topRepo: Object.entries(commitsPerRepo).sort((a, b) => b[1] - a[1])[0]?.[0] || null,
-    generatedAt: new Date().toISOString(),
-  }
+const peakDay = Object.entries(heatmap)
+  .filter(([, count]) => count > 0)
+  .sort((a, b) => b[1] - a[1])[0]
+
+const metrics = {
+  totalCommits: allCommits.length,
+  streak,
+  avgPRMergeTimeHours: avgMergeTime,
+  activeRepos,
+  commitsPerRepo,
+  weeklyChurn,
+  heatmap,
+  peakDay: peakDay ? { date: peakDay[0], count: peakDay[1] } : null,
+  topRepo: Object.entries(commitsPerRepo).sort((a, b) => b[1] - a[1])[0]?.[0] || null,
+  generatedAt: new Date().toISOString(),
+}
 
   await redis.setex(cacheKey, METRICS_TTL, JSON.stringify(metrics))
 
