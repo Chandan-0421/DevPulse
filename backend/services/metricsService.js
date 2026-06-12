@@ -1,7 +1,7 @@
 const redis = require('../config/redis')
-const { getRepos, getCommits, getPullRequests } = require('./githubService')
+const { getRepos, getCommits, getPullRequests, getCodeFrequency } = require('./githubService')
 
-const METRICS_TTL = 900  // 15 minutes
+const METRICS_TTL = 900
 
 async function computeMetrics(token, username) {
   const cacheKey = `metrics:${username}`
@@ -32,6 +32,22 @@ async function computeMetrics(token, username) {
           totalPRMergeTimes.push(hoursToMerge)
         }
       }
+
+      // Code churn
+      try {
+        const freq = await getCodeFrequency(token, repo.owner.login, repo.name)
+        if (Array.isArray(freq)) {
+          for (const [timestamp, added, deleted] of freq) {
+            const weekKey = new Date(timestamp * 1000).toISOString().slice(0, 10)
+            if (!weeklyChurn[weekKey]) weeklyChurn[weekKey] = { added: 0, deleted: 0 }
+            weeklyChurn[weekKey].added += added
+            weeklyChurn[weekKey].deleted += Math.abs(deleted)
+          }
+        }
+      } catch (e) {
+        // skip repos with no stats
+      }
+
     } catch (e) {
       // skip repos that error
     }
@@ -44,9 +60,8 @@ async function computeMetrics(token, username) {
     if (date) heatmap[date] = (heatmap[date] || 0) + 1
   }
 
-// Streak — consecutive days ending today or yesterday (allows 1 day grace)
+  // Streak
   let streak = 0
-
   for (let i = 0; i < 90; i++) {
     const d = new Date()
     d.setDate(d.getDate() - i)
@@ -58,23 +73,19 @@ async function computeMetrics(token, username) {
     const hasCommit = heatmap[utcKey] || heatmap[istKey]
 
     if (i === 0 && !hasCommit) {
-      // No commit today — check yesterday before giving up
       continue
     }
-
     if (i === 1 && streak === 0 && !hasCommit) {
-      // No commit today OR yesterday — streak is genuinely 0
       break
     }
-
     if (hasCommit) {
       streak++
     } else {
-      // Gap found — streak ends
       break
     }
   }
-  // Active repos — repos with at least 1 commit in last 90 days
+
+  // Active repos
   const activeRepos = Object.values(commitsPerRepo).filter(count => count > 0).length
 
   const avgMergeTime =
@@ -82,22 +93,22 @@ async function computeMetrics(token, username) {
       ? Math.round(totalPRMergeTimes.reduce((a, b) => a + b, 0) / totalPRMergeTimes.length)
       : null
 
-const peakDay = Object.entries(heatmap)
-  .filter(([, count]) => count > 0)
-  .sort((a, b) => b[1] - a[1])[0]
+  const peakDay = Object.entries(heatmap)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])[0]
 
-const metrics = {
-  totalCommits: allCommits.length,
-  streak,
-  avgPRMergeTimeHours: avgMergeTime,
-  activeRepos,
-  commitsPerRepo,
-  weeklyChurn,
-  heatmap,
-  peakDay: peakDay ? { date: peakDay[0], count: peakDay[1] } : null,
-  topRepo: Object.entries(commitsPerRepo).sort((a, b) => b[1] - a[1])[0]?.[0] || null,
-  generatedAt: new Date().toISOString(),
-}
+  const metrics = {
+    totalCommits: allCommits.length,
+    streak,
+    avgPRMergeTimeHours: avgMergeTime,
+    activeRepos,
+    commitsPerRepo,
+    weeklyChurn,
+    heatmap,
+    peakDay: peakDay ? { date: peakDay[0], count: peakDay[1] } : null,
+    topRepo: Object.entries(commitsPerRepo).sort((a, b) => b[1] - a[1])[0]?.[0] || null,
+    generatedAt: new Date().toISOString(),
+  }
 
   await redis.setex(cacheKey, METRICS_TTL, JSON.stringify(metrics))
 
