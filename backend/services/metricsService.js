@@ -3,13 +3,15 @@ const { getRepos, getCommits, getPullRequests, getCodeFrequency } = require('./g
 
 const METRICS_TTL = 900
 
-async function computeMetrics(token, username) {
+async function computeMetrics(token, username, bypassCache = false) {
   const cacheKey = `metrics:${username}`
 
-  const cached = await redis.get(cacheKey)
-  if (cached) return JSON.parse(cached)
+  if (!bypassCache) {
+    const cached = await redis.get(cacheKey)
+    if (cached) return JSON.parse(cached)
+  }
 
-  const repos = await getRepos(token)
+  const repos = await getRepos(token, bypassCache)
   const topRepos = repos.slice(0, 10)
 
   let allCommits = []
@@ -17,39 +19,45 @@ async function computeMetrics(token, username) {
   const commitsPerRepo = {}
   const weeklyChurn = {}
 
-  for (const repo of topRepos) {
-    try {
-      const commits = await getCommits(token, repo.owner.login, repo.name)
-      allCommits = allCommits.concat(commits)
-      commitsPerRepo[repo.name] = commits.length
+  // Fetch all repo data in parallel
+  const repoResults = await Promise.all(
+    topRepos.map(async (repo) => {
+      const result = { commits: [], prs: [], churn: [] }
 
-      const prs = await getPullRequests(token, repo.owner.login, repo.name)
-      for (const pr of prs) {
-        if (pr.merged_at) {
-          const open = new Date(pr.created_at)
-          const merged = new Date(pr.merged_at)
-          const hoursToMerge = (merged - open) / (1000 * 60 * 60)
-          totalPRMergeTimes.push(hoursToMerge)
-        }
-      }
-
-      // Code churn
       try {
-        const freq = await getCodeFrequency(token, repo.owner.login, repo.name)
-        if (Array.isArray(freq)) {
-          for (const [timestamp, added, deleted] of freq) {
-            const weekKey = new Date(timestamp * 1000).toISOString().slice(0, 10)
-            if (!weeklyChurn[weekKey]) weeklyChurn[weekKey] = { added: 0, deleted: 0 }
-            weeklyChurn[weekKey].added += added
-            weeklyChurn[weekKey].deleted += Math.abs(deleted)
-          }
-        }
-      } catch (e) {
-        // skip repos with no stats
-      }
+        result.commits = await getCommits(token, repo.owner.login, repo.name)
+      } catch (e) {}
 
-    } catch (e) {
-      // skip repos that error
+      try {
+        const prs = await getPullRequests(token, repo.owner.login, repo.name)
+        result.prs = prs.filter(pr => pr.merged_at)
+      } catch (e) {}
+
+      try {
+        const freq = await getCodeFrequency(token, repo.owner.login, repo.name, bypassCache)
+        if (Array.isArray(freq)) result.churn = freq
+      } catch (e) {}
+
+      return { name: repo.name, ...result }
+    })
+  )
+
+  // Process results
+  for (const r of repoResults) {
+    allCommits = allCommits.concat(r.commits)
+    commitsPerRepo[r.name] = r.commits.length
+
+    for (const pr of r.prs) {
+      const open = new Date(pr.created_at)
+      const merged = new Date(pr.merged_at)
+      totalPRMergeTimes.push((merged - open) / (1000 * 60 * 60))
+    }
+
+    for (const [timestamp, added, deleted] of r.churn) {
+      const weekKey = new Date(timestamp * 1000).toISOString().slice(0, 10)
+      if (!weeklyChurn[weekKey]) weeklyChurn[weekKey] = { added: 0, deleted: 0 }
+      weeklyChurn[weekKey].added += added
+      weeklyChurn[weekKey].deleted += Math.abs(deleted)
     }
   }
 

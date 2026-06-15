@@ -13,6 +13,7 @@ export default function App() {
   const [token, setToken] = useState(localStorage.getItem('gh_token'))
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [wsLive, setWsLive] = useState(false)
   const wsRef = useRef(null)
 
@@ -44,6 +45,20 @@ export default function App() {
       if (e.response?.status === 401) logout()
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleSync() {
+    setSyncing(true)
+    try {
+      const res = await axios.get(`${API}/metrics?refresh=true`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setData(res.data)
+    } catch (e) {
+      if (e.response?.status === 401) logout()
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -194,6 +209,9 @@ export default function App() {
                 </div>
               </div>
             </div>
+            <button className="sync-btn" onClick={handleSync} disabled={syncing || loading}>
+              {syncing ? 'Syncing...' : 'Sync'}
+            </button>
             <button className="logout-btn" onClick={logout}>Logout</button>
           </div>
         </div>

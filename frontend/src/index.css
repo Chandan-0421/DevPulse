@@ -152,6 +152,31 @@ body {
   transform: translateY(-1px);
 }
 
+/* Sync button */
+.sync-btn {
+  background: rgba(26, 122, 53, 0.08);
+  color: #1a7a35;
+  border: 1px solid rgba(26, 122, 53, 0.2);
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(26, 122, 53, 0.08);
+}
+
+.sync-btn:hover:not(:disabled) {
+  background: rgba(26, 122, 53, 0.15);
+  transform: translateY(-1px);
+}
+
+.sync-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Section title */
 .section-title {
   font-size: 11px;
@@ -270,7 +295,7 @@ body {
     border-radius: 12px;
   }
 
-  .logout-btn {
+  .logout-btn, .sync-btn {
     padding: 6px 12px;
     font-size: 12px;
   }

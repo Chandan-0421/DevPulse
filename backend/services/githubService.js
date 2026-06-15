@@ -19,10 +19,12 @@ async function incrementCallCount(token) {
   await multi.exec()
 }
 
-async function cachedRequest(cacheKey, token, url, params = {}) {
+async function cachedRequest(cacheKey, token, url, params = {}, bypassCache = false) {
   // Check cache first
-  const cached = await redis.get(cacheKey)
-  if (cached) return JSON.parse(cached)
+  if (!bypassCache) {
+    const cached = await redis.get(cacheKey)
+    if (cached) return JSON.parse(cached)
+  }
 
   // Check rate limit before making API call
   const remaining = await getRemainingCalls(token)
@@ -46,48 +48,53 @@ async function cachedRequest(cacheKey, token, url, params = {}) {
 }
 
 // Get authenticated user profile
-async function getUser(token) {
-  return cachedRequest(`user:${token.slice(-8)}`, token, 'https://api.github.com/user')
+async function getUser(token, bypassCache = false) {
+  return cachedRequest(`user:${token.slice(-8)}`, token, 'https://api.github.com/user', {}, bypassCache)
 }
 
 // Get all repos for authenticated user
-async function getRepos(token) {
+async function getRepos(token, bypassCache = false) {
   return cachedRequest(
     `repos:${token.slice(-8)}`,
     token,
     'https://api.github.com/user/repos',
-    { per_page: 100, sort: 'pushed' }
+    { per_page: 100, sort: 'pushed' },
+    bypassCache
   )
 }
 
 // Get commits for a specific repo in last 90 days
-async function getCommits(token, owner, repo) {
+async function getCommits(token, owner, repo, bypassCache = false) {
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
   return cachedRequest(
     `commits:${owner}:${repo}:${token.slice(-8)}`,
     token,
     `https://api.github.com/repos/${owner}/${repo}/commits`,
-    { since, per_page: 100 }
+    { since, per_page: 100 },
+    bypassCache
   )
 }
 
 // Get pull requests for a repo
-async function getPullRequests(token, owner, repo) {
+async function getPullRequests(token, owner, repo, bypassCache = false) {
   return cachedRequest(
     `prs:${owner}:${repo}:${token.slice(-8)}`,
     token,
     `https://api.github.com/repos/${owner}/${repo}/pulls`,
-    { state: 'closed', per_page: 50, sort: 'updated' }
+    { state: 'closed', per_page: 50, sort: 'updated' },
+    bypassCache
   )
 }
 
 // Get code frequency (lines added/deleted per week) for a repo
-async function getCodeFrequency(token, owner, repo) {
+async function getCodeFrequency(token, owner, repo, bypassCache = false) {
   const cacheKey = `churn:${owner}:${repo}:${token.slice(-8)}`
 
-  // Check cache first
-  const cached = await redis.get(cacheKey)
-  if (cached) return JSON.parse(cached)
+  if (!bypassCache) {
+    // Check cache first
+    const cached = await redis.get(cacheKey)
+    if (cached) return JSON.parse(cached)
+  }
 
   // GitHub returns 202 while it computes stats — retry up to 3 times
   for (let attempt = 0; attempt < 3; attempt++) {

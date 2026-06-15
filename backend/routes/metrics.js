@@ -9,8 +9,9 @@ router.use(authMiddleware)
 
 router.get('/debug', async (req, res) => {
   try {
-    const user = await getUser(req.token)
-    const metrics = await computeMetrics(req.token, user.login)
+    const refresh = req.query.refresh === 'true'
+    const user = await getUser(req.token, refresh)
+    const metrics = await computeMetrics(req.token, user.login, refresh)
     res.json({
       streak: metrics.streak,
       weeklyChurnKeys: Object.keys(metrics.weeklyChurn || {}).length,
@@ -24,16 +25,17 @@ router.get('/debug', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const user = await getUser(req.token)
-    const metrics = await computeMetrics(req.token, user.login)
+    const refresh = req.query.refresh === 'true'
+    const user = await getUser(req.token, refresh)
+    const metrics = await computeMetrics(req.token, user.login, refresh)
     res.json({ 
-  user: { 
-    login: user.login, 
-    name: user.name || user.login,  // fallback to login if name not set
-    avatar: user.avatar_url 
-  }, 
-  metrics 
-})
+      user: { 
+        login: user.login, 
+        name: user.name || user.login,  // fallback to login if name not set
+        avatar: user.avatar_url 
+      }, 
+      metrics 
+    })
   } catch (err) {
     console.error('Metrics error:', err.message)
     res.status(500).json({ error: err.message })
