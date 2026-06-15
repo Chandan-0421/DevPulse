@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const { computeMetrics } = require('../services/metricsService')
 const { getUser } = require('../services/githubService')
+const redis = require('../config/redis')
 
 // Middleware: extract token from Authorization header
 const authMiddleware = require('../middleware/auth')
@@ -11,6 +12,16 @@ router.get('/debug', async (req, res) => {
   try {
     const refresh = req.query.refresh === 'true'
     const user = await getUser(req.token, refresh)
+
+    if (refresh) {
+      const cooldownKey = `cooldown:${user.login}`
+      const onCooldown = await redis.get(cooldownKey)
+      if (onCooldown) {
+        return res.status(429).json({ error: "Please wait 30 seconds between syncs." })
+      }
+      await redis.setex(cooldownKey, 30, '1')
+    }
+
     const metrics = await computeMetrics(req.token, user.login, refresh)
     res.json({
       streak: metrics.streak,
@@ -27,6 +38,16 @@ router.get('/', async (req, res) => {
   try {
     const refresh = req.query.refresh === 'true'
     const user = await getUser(req.token, refresh)
+
+    if (refresh) {
+      const cooldownKey = `cooldown:${user.login}`
+      const onCooldown = await redis.get(cooldownKey)
+      if (onCooldown) {
+        return res.status(429).json({ error: "Please wait 30 seconds between syncs." })
+      }
+      await redis.setex(cooldownKey, 30, '1')
+    }
+
     const metrics = await computeMetrics(req.token, user.login, refresh)
     res.json({ 
       user: { 

@@ -14,8 +14,16 @@ export default function App() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState(null)
   const [wsLive, setWsLive] = useState(false)
   const wsRef = useRef(null)
+
+  useEffect(() => {
+    if (syncError) {
+      const timer = setTimeout(() => setSyncError(null), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [syncError])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -50,13 +58,20 @@ export default function App() {
 
   async function handleSync() {
     setSyncing(true)
+    setSyncError(null)
     try {
       const res = await axios.get(`${API}/metrics?refresh=true`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       setData(res.data)
     } catch (e) {
-      if (e.response?.status === 401) logout()
+      if (e.response?.status === 401) {
+        logout()
+      } else if (e.response?.status === 429) {
+        setSyncError(e.response.data.error || 'Please wait 30 seconds between syncs.')
+      } else {
+        setSyncError('Sync failed. Please check rate limit or try again later.')
+      }
     } finally {
       setSyncing(false)
     }
@@ -215,6 +230,13 @@ export default function App() {
             <button className="logout-btn" onClick={logout}>Logout</button>
           </div>
         </div>
+
+        {/* Sync error banner */}
+        {syncError && (
+          <div className="error-toast">
+            <span>⚠️</span> {syncError}
+          </div>
+        )}
 
         {/* Hero */}
         <div style={{ marginBottom: 28 }}>
