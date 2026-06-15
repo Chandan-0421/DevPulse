@@ -15,6 +15,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState(null)
+  const [cooldownRemaining, setCooldownRemaining] = useState(0)
   const [wsLive, setWsLive] = useState(false)
   const wsRef = useRef(null)
 
@@ -24,6 +25,14 @@ export default function App() {
       return () => clearTimeout(timer)
     }
   }, [syncError])
+
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return
+    const timer = setInterval(() => {
+      setCooldownRemaining(prev => prev - 1)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldownRemaining])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -64,11 +73,13 @@ export default function App() {
         headers: { Authorization: `Bearer ${token}` },
       })
       setData(res.data)
+      setCooldownRemaining(30)
     } catch (e) {
       if (e.response?.status === 401) {
         logout()
       } else if (e.response?.status === 429) {
         setSyncError(e.response.data.error || 'Please wait 30 seconds between syncs.')
+        setCooldownRemaining(30)
       } else {
         setSyncError('Sync failed. Please check rate limit or try again later.')
       }
@@ -224,15 +235,20 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <button className="sync-btn" onClick={handleSync} disabled={syncing || loading}>
-              {syncing ? 'Syncing...' : 'Sync'}
+            <button className="sync-btn" onClick={handleSync} disabled={syncing || loading || cooldownRemaining > 0}>
+              {syncing ? 'Syncing...' : cooldownRemaining > 0 ? `Sync (${cooldownRemaining}s)` : 'Sync'}
             </button>
             <button className="logout-btn" onClick={logout}>Logout</button>
           </div>
         </div>
 
-        {/* Sync error banner */}
-        {syncError && (
+        {/* Sync error/cooldown banner */}
+        {cooldownRemaining > 0 && (
+          <div className="error-toast">
+            <span>⚠️</span> Please wait {cooldownRemaining} seconds before syncing again.
+          </div>
+        )}
+        {syncError && !cooldownRemaining && (
           <div className="error-toast">
             <span>⚠️</span> {syncError}
           </div>
